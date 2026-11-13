@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import 'package:e_commerce/app/core/theme/app_colors.dart';
 import 'package:e_commerce/app/routes/app_pages.dart';
+
 import '../controllers/cart_controller.dart';
 
 class CartView extends GetView<CartController> {
@@ -11,23 +13,14 @@ class CartView extends GetView<CartController> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Data mockup item keranjang untuk template UI
-    final mockCartItems = [
-      {
-        'title': 'Nike Air Jordan 1 Retro High',
-        'price': 'Rp 2.499.000',
-        'size': 42,
-        'quantity': 1.obs,
-        'image': 'https://images.unsplash.com/photo-1552346154-21d32810aba3?w=500&q=80',
-      },
-      {
-        'title': 'Adidas Ultraboost Light Running',
-        'price': 'Rp 2.899.000',
-        'size': 41,
-        'quantity': 1.obs,
-        'image': 'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=500&q=80',
-      },
-    ];
+    final textPrimary = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.lightTextPrimary;
+    final textSecondary = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
+    final surface = isDark ? AppColors.darkSurfaceCard : Colors.white;
+    final border = isDark ? AppColors.darkBorder : AppColors.lightBorder;
 
     return Scaffold(
       appBar: AppBar(
@@ -35,246 +28,326 @@ class CartView extends GetView<CartController> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
           onPressed: () => Get.back(),
         ),
-        title: const Text(
-          'Keranjang Belanja (2)',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        title: Obx(
+          () => Text(
+            'Keranjang Belanja (${controller.totalItems})',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
         ),
         actions: [
-          IconButton(
-            tooltip: 'Kosongkan Keranjang',
-            icon: const Icon(Icons.delete_sweep_outlined, color: AppColors.error),
-            onPressed: () {
-              Get.defaultDialog(
-                title: 'Kosongkan Keranjang',
-                middleText: 'Yakin ingin menghapus seluruh belanjaan?',
-                textConfirm: 'Hapus',
-                textCancel: 'Batal',
-                confirmTextColor: Colors.white,
-                buttonColor: AppColors.error,
-                onConfirm: () => Get.back(),
-              );
-            },
+          Obx(
+            () => IconButton(
+              tooltip: 'Kosongkan Keranjang',
+              icon: const Icon(
+                Icons.delete_sweep_outlined,
+                color: AppColors.error,
+              ),
+              onPressed: controller.cartItems.isEmpty
+                  ? null
+                  : () {
+                      Get.defaultDialog(
+                        title: 'Kosongkan Keranjang',
+                        middleText: 'Yakin ingin menghapus seluruh belanjaan?',
+                        textConfirm: 'Hapus',
+                        textCancel: 'Batal',
+                        confirmTextColor: Colors.white,
+                        buttonColor: AppColors.error,
+                        onConfirm: () {
+                          controller.clearCart();
+                          Get.back();
+                        },
+                      );
+                    },
+            ),
           ),
           const SizedBox(width: 8),
         ],
       ),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: mockCartItems.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 12),
-        itemBuilder: (context, index) {
-          final item = mockCartItems[index];
-          final qty = item['quantity'] as RxInt;
+      body: Obx(() {
+        final items = controller.cartItems;
 
-          return Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurfaceCard : Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-              ),
-            ),
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    width: 80,
-                    height: 80,
-                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                    child: Image.network(
-                      item['image'] as String,
-                      fit: BoxFit.cover,
+        if (items.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.shopping_bag_outlined,
+                    size: 76,
+                    color: textSecondary,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Keranjang masih kosong',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
                     ),
                   ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item['title'] as String,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                  const SizedBox(height: 8),
+                  Text(
+                    'Yuk, temukan sepatu favoritmu!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: textSecondary),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () => Get.back(),
+                    child: const Text('Mulai Belanja'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemCount: items.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final item = items[index];
+            final imageUrl = item['image']?.toString() ?? '';
+            final title = item['title']?.toString() ?? 'Produk';
+            final price = item['price']?.toString() ?? 'Rp 0';
+            final size = item['size'] ?? '-';
+            final quantity = item['quantity'] as int? ?? 1;
+
+            return Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: border),
+              ),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      color: isDark
+                          ? const Color(0xFF1E293B)
+                          : const Color(0xFFF1F5F9),
+                      child: imageUrl.isEmpty
+                          ? const Icon(Icons.image_not_supported_outlined)
+                          : Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.image_not_supported_outlined,
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: textPrimary,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withAlpha(20),
-                          borderRadius: BorderRadius.circular(6),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withAlpha(20),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'Size $size',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
                         ),
-                        child: Text(
-                          'Size ${item['size']}',
+                        const SizedBox(height: 6),
+                        Text(
+                          price,
                           style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
                             color: AppColors.primary,
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        item['price'] as String,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF0F172A)
+                              : const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: border),
                         ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          InkWell(
-                            onTap: () {
-                              if (qty.value > 1) qty.value--;
-                            },
-                            borderRadius: BorderRadius.circular(8),
-                            child: const Padding(
-                              padding: EdgeInsets.all(6),
-                              child: Icon(Icons.remove_rounded, size: 16),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            InkWell(
+                              onTap: () => controller.decreaseQuantity(index),
+                              borderRadius: BorderRadius.circular(8),
+                              child: const Padding(
+                                padding: EdgeInsets.all(6),
+                                child: Icon(Icons.remove_rounded, size: 16),
+                              ),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: Obx(
-                              () => Text(
-                                '${qty.value}',
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
+                              child: Text(
+                                '$quantity',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13,
                                 ),
                               ),
                             ),
-                          ),
-                          InkWell(
-                            onTap: () => qty.value++,
-                            borderRadius: BorderRadius.circular(8),
-                            child: const Padding(
-                              padding: EdgeInsets.all(6),
-                              child: Icon(Icons.add_rounded, size: 16),
+                            InkWell(
+                              onTap: () => controller.increaseQuantity(index),
+                              borderRadius: BorderRadius.circular(8),
+                              child: const Padding(
+                                padding: EdgeInsets.all(6),
+                                child: Icon(Icons.add_rounded, size: 16),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Padding(
-                      padding: EdgeInsets.all(4),
-                      child: Icon(
-                        Icons.delete_outline_rounded,
-                        size: 18,
-                        color: AppColors.error,
+                      const SizedBox(height: 6),
+                      IconButton(
+                        tooltip: 'Hapus produk',
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () => controller.removeItem(index),
+                        icon: const Icon(
+                          Icons.delete_outline_rounded,
+                          size: 20,
+                          color: AppColors.error,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkSurface : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(isDark ? 60 : 15),
-              blurRadius: 16,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Subtotal',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                    ),
-                  ),
-                  Text(
-                    'Rp 5.398.000',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                    ),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Diskon Spesial', style: TextStyle(fontSize: 13, color: AppColors.success)),
-                  Text(
-                    '- Rp 150.000',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.success),
-                  ),
-                ],
-              ),
-              const Divider(height: 18),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Total Pembayaran',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                    ),
-                  ),
-                  const Text(
-                    'Rp 5.248.000',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.payment_rounded),
-                label: const Text('Lanjut ke Pembayaran'),
-                onPressed: () => Get.toNamed(Routes.CHECKOUT),
+            );
+          },
+        );
+      }),
+      bottomNavigationBar: Obx(() {
+        final isEmpty = controller.cartItems.isEmpty;
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkSurface : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(isDark ? 60 : 15),
+                blurRadius: 16,
+                offset: const Offset(0, -4),
               ),
             ],
           ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _SummaryRow(
+                  label: 'Subtotal',
+                  value: controller.formatRupiah(controller.subtotal),
+                  textColor: textPrimary,
+                ),
+                const SizedBox(height: 6),
+                _SummaryRow(
+                  label: 'Diskon Spesial',
+                  value: '- ${controller.formatRupiah(controller.discount)}',
+                  textColor: AppColors.success,
+                ),
+                const Divider(height: 18),
+                _SummaryRow(
+                  label: 'Total Pembayaran',
+                  value: controller.formatRupiah(controller.totalPayment),
+                  textColor: AppColors.primary,
+                  isTotal: true,
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.payment_rounded),
+                    label: const Text('Lanjut ke Pembayaran'),
+                    onPressed: isEmpty
+                        ? null
+                        : () => Get.toNamed(Routes.CHECKOUT),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+class _SummaryRow extends StatelessWidget {
+  const _SummaryRow({
+    required this.label,
+    required this.value,
+    required this.textColor,
+    this.isTotal = false,
+  });
+
+  final String label;
+  final String value;
+  final Color textColor;
+  final bool isTotal;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: isTotal ? 15 : 13,
+            fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+            color: textColor,
+          ),
         ),
-      ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: isTotal ? 18 : 14,
+            fontWeight: FontWeight.w800,
+            color: textColor,
+          ),
+        ),
+      ],
     );
   }
 }
