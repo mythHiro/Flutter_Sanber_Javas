@@ -1,9 +1,9 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:e_commerce/app/core/theme/app_colors.dart';
 import 'package:e_commerce/app/routes/app_pages.dart';
+
 import '../controllers/detail_controller.dart';
 
 class DetailView extends GetView<DetailController> {
@@ -11,32 +11,25 @@ class DetailView extends GetView<DetailController> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark =
-        Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final product = controller.product;
 
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            size: 20,
-          ),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
           onPressed: () => Get.back(),
         ),
         title: const Text('Detail Produk'),
         actions: [
-          // Wishlist terhubung ke HomeController
           Obx(
             () => IconButton(
               icon: Icon(
                 controller.isFavorite
                     ? Icons.favorite_rounded
                     : Icons.favorite_border_rounded,
-                color: controller.isFavorite
-                    ? AppColors.error
-                    : null,
+                color: controller.isFavorite ? AppColors.error : null,
               ),
               onPressed: () {
                 controller.toggleFavorite();
@@ -46,8 +39,8 @@ class DetailView extends GetView<DetailController> {
                       ? 'Wishlist Ditambahkan'
                       : 'Wishlist Dihapus',
                   controller.isFavorite
-                      ? '${product['title']} disimpan ke favorit!'
-                      : '${product['title']} dihapus dari favorit.',
+                      ? '${product.name} disimpan ke favorit!'
+                      : '${product.name} dihapus dari favorit.',
                   snackPosition: SnackPosition.BOTTOM,
                   backgroundColor: controller.isFavorite
                       ? AppColors.accent
@@ -65,10 +58,7 @@ class DetailView extends GetView<DetailController> {
       ),
 
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -82,35 +72,34 @@ class DetailView extends GetView<DetailController> {
                     : const Color(0xFFF1F5F9),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: isDark
-                      ? AppColors.darkBorder
-                      : AppColors.lightBorder,
+                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                 ),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(20),
                 child: Image.network(
-                  product['image'] as String? ?? '',
+                  product.imageUrl,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                      Center(
-                    child: Icon(
-                      Icons.image_not_supported_outlined,
-                      size: 64,
-                      color: isDark
-                          ? AppColors.darkTextMuted
-                          : AppColors.lightTextMuted,
-                    ),
-                  ),
+                  errorBuilder: (context, error, stackTrace) {
+                    return Center(
+                      child: Icon(
+                        Icons.image_not_supported_outlined,
+                        size: 64,
+                        color: isDark
+                            ? AppColors.darkTextMuted
+                            : AppColors.lightTextMuted,
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
+
             const SizedBox(height: 20),
 
             // Kategori dan rating
             Row(
-              mainAxisAlignment:
-                  MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -122,8 +111,7 @@ class DetailView extends GetView<DetailController> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    product['category'] as String? ??
-                        'Sneakers',
+                    product.category,
                     style: const TextStyle(
                       color: AppColors.primary,
                       fontSize: 12,
@@ -140,7 +128,7 @@ class DetailView extends GetView<DetailController> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '${product['rating'] ?? 4.8} / 5.0 (120+ ulasan)',
+                      '${product.rating} / 5.0 (120+ ulasan)',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -153,12 +141,12 @@ class DetailView extends GetView<DetailController> {
                 ),
               ],
             ),
+
             const SizedBox(height: 12),
 
             // Nama produk dan harga
             Text(
-              product['title'] as String? ??
-                  'Sneakers Premium',
+              product.name,
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
@@ -168,15 +156,18 @@ class DetailView extends GetView<DetailController> {
                 height: 1.2,
               ),
             ),
+
             const SizedBox(height: 8),
+
             Text(
-              product['price'] as String? ?? 'Rp 0',
+              product.formattedPrice,
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
                 color: AppColors.primary,
               ),
             ),
+
             const SizedBox(height: 20),
 
             // Pilihan ukuran
@@ -190,6 +181,7 @@ class DetailView extends GetView<DetailController> {
                     : AppColors.lightTextPrimary,
               ),
             ),
+
             const SizedBox(height: 10),
 
             SizedBox(
@@ -197,35 +189,33 @@ class DetailView extends GetView<DetailController> {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: controller.sizes.length,
-                separatorBuilder: (context, index) =>
-                    const SizedBox(width: 10),
+                separatorBuilder: (context, index) {
+                  return const SizedBox(width: 10);
+                },
                 itemBuilder: (context, index) {
                   final size = controller.sizes[index];
 
                   return Obx(() {
-                    final isSelected =
-                        controller.selectedSize.value == size;
+                    final isSelected = controller.selectedSize.value == size;
 
                     return InkWell(
                       borderRadius: BorderRadius.circular(12),
-                      onTap: () =>
-                          controller.selectSize(size),
+                      onTap: () => controller.selectSize(size),
                       child: Container(
                         width: 50,
                         decoration: BoxDecoration(
                           color: isSelected
                               ? AppColors.primary
                               : (isDark
-                                  ? AppColors.darkSurfaceCard
-                                  : Colors.white),
-                          borderRadius:
-                              BorderRadius.circular(12),
+                                    ? AppColors.darkSurfaceCard
+                                    : Colors.white),
+                          borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: isSelected
                                 ? AppColors.primary
                                 : (isDark
-                                    ? AppColors.darkBorder
-                                    : AppColors.lightBorder),
+                                      ? AppColors.darkBorder
+                                      : AppColors.lightBorder),
                             width: 1.5,
                           ),
                         ),
@@ -238,8 +228,8 @@ class DetailView extends GetView<DetailController> {
                               color: isSelected
                                   ? Colors.white
                                   : (isDark
-                                      ? AppColors.darkTextPrimary
-                                      : AppColors.lightTextPrimary),
+                                        ? AppColors.darkTextPrimary
+                                        : AppColors.lightTextPrimary),
                             ),
                           ),
                         ),
@@ -249,6 +239,7 @@ class DetailView extends GetView<DetailController> {
                 },
               ),
             ),
+
             const SizedBox(height: 20),
 
             // Deskripsi produk
@@ -262,7 +253,9 @@ class DetailView extends GetView<DetailController> {
                     : AppColors.lightTextPrimary,
               ),
             ),
+
             const SizedBox(height: 8),
+
             Text(
               'Sepatu sneakers edisi terbatas dengan material '
               'kulit sintetis premium berkualitas tinggi. '
@@ -277,12 +270,12 @@ class DetailView extends GetView<DetailController> {
                     : AppColors.lightTextSecondary,
               ),
             ),
+
             const SizedBox(height: 24),
 
             // Quantity counter
             Row(
-              mainAxisAlignment:
-                  MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   'Jumlah Pembelian',
@@ -313,12 +306,8 @@ class DetailView extends GetView<DetailController> {
                   child: Row(
                     children: [
                       IconButton(
-                        icon: const Icon(
-                          Icons.remove_rounded,
-                          size: 18,
-                        ),
-                        onPressed:
-                            controller.decreaseQuantity,
+                        icon: const Icon(Icons.remove_rounded, size: 18),
+                        onPressed: controller.decreaseQuantity,
                         constraints: const BoxConstraints(
                           minWidth: 32,
                           minHeight: 32,
@@ -326,9 +315,7 @@ class DetailView extends GetView<DetailController> {
                         padding: EdgeInsets.zero,
                       ),
                       Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
                         child: Obx(
                           () => Text(
                             '${controller.quantity.value}',
@@ -343,12 +330,8 @@ class DetailView extends GetView<DetailController> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(
-                          Icons.add_rounded,
-                          size: 18,
-                        ),
-                        onPressed:
-                            controller.increaseQuantity,
+                        icon: const Icon(Icons.add_rounded, size: 18),
+                        onPressed: controller.increaseQuantity,
                         constraints: const BoxConstraints(
                           minWidth: 32,
                           minHeight: 32,
@@ -360,6 +343,7 @@ class DetailView extends GetView<DetailController> {
                 ),
               ],
             ),
+
             const SizedBox(height: 30),
           ],
         ),
@@ -369,14 +353,10 @@ class DetailView extends GetView<DetailController> {
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark
-              ? AppColors.darkSurface
-              : Colors.white,
+          color: isDark ? AppColors.darkSurface : Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withAlpha(
-                isDark ? 50 : 20,
-              ),
+              color: Colors.black.withAlpha(isDark ? 50 : 20),
               blurRadius: 10,
               offset: const Offset(0, -4),
             ),
@@ -387,21 +367,17 @@ class DetailView extends GetView<DetailController> {
             children: [
               Expanded(
                 child: ElevatedButton.icon(
-                  icon: const Icon(
-                    Icons.shopping_bag_rounded,
-                  ),
-                  label: const Text(
-                    'Tambah ke Keranjang',
-                  ),
+                  icon: const Icon(Icons.shopping_bag_rounded),
+                  label: const Text('Tambah ke Keranjang'),
                   onPressed: () {
                     controller.addToCart();
 
                     Get.snackbar(
                       'Berhasil Ditambahkan',
                       '${controller.quantity.value} item '
-                      '${product['title']} '
-                      '(Size ${controller.selectedSize.value}) '
-                      'berhasil masuk ke keranjang!',
+                          '${product.name} '
+                          '(Size ${controller.selectedSize.value}) '
+                          'berhasil masuk ke keranjang!',
                       snackPosition: SnackPosition.BOTTOM,
                       backgroundColor: AppColors.success,
                       colorText: Colors.white,

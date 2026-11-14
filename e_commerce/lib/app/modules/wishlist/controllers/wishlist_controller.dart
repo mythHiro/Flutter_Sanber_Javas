@@ -1,23 +1,24 @@
 import 'package:get/get.dart';
 
+import '../../../data/models/product_model.dart';
+import '../../cart/controllers/cart_controller.dart';
+import '../../home/controllers/home_controller.dart';
+
 class WishlistController extends GetxController {
-  //TODO: Implement WishlistController
+  final HomeController homeController = Get.find<HomeController>();
+  final CartController cartController = Get.find<CartController>();
 
-  final count = 0.obs;
-  @override
-  void onInit() {
-    super.onInit();
+  List<ProductModel> get wishlistProducts {
+    return homeController.products
+        .where((product) => homeController.isFavorite(product.id))
+        .toList();
   }
 
-  @override
-  void onReady() {
-    super.onReady();
+  void removeFromWishlist(ProductModel product) {
+    homeController.toggleFavorite(product.id);
   }
 
-  @override
-  void onClose() {
-    super.onClose();
+  void addToCart(ProductModel product) {
+    cartController.addItem(product);
   }
-
-  void increment() => count.value++;
 }

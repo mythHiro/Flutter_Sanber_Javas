@@ -42,7 +42,7 @@ class CartView extends GetView<CartController> {
                 Icons.delete_sweep_outlined,
                 color: AppColors.error,
               ),
-              onPressed: controller.cartItems.isEmpty
+              onPressed: controller.items.isEmpty
                   ? null
                   : () {
                       Get.defaultDialog(
@@ -64,7 +64,7 @@ class CartView extends GetView<CartController> {
         ],
       ),
       body: Obx(() {
-        final items = controller.cartItems;
+        final items = controller.items;
 
         if (items.isEmpty) {
           return Center(
@@ -107,14 +107,12 @@ class CartView extends GetView<CartController> {
         return ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: items.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          separatorBuilder: (_, index) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final item = items[index];
-            final imageUrl = item['image']?.toString() ?? '';
-            final title = item['title']?.toString() ?? 'Produk';
-            final price = item['price']?.toString() ?? 'Rp 0';
-            final size = item['size'] ?? '-';
-            final quantity = item['quantity'] as int? ?? 1;
+            final product = item.product;
+            final imageUrl = product.imageUrl;
+            final itemId = item.id;
 
             return Container(
               padding: const EdgeInsets.all(12),
@@ -138,9 +136,10 @@ class CartView extends GetView<CartController> {
                           : Image.network(
                               imageUrl,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => const Icon(
-                                Icons.image_not_supported_outlined,
-                              ),
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(
+                                    Icons.image_not_supported_outlined,
+                                  ),
                             ),
                     ),
                   ),
@@ -150,7 +149,7 @@ class CartView extends GetView<CartController> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          title,
+                          product.name,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -170,7 +169,7 @@ class CartView extends GetView<CartController> {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            'Size $size',
+                            'Size ${item.selectedSize}',
                             style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -180,7 +179,7 @@ class CartView extends GetView<CartController> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          price,
+                          product.formattedPrice,
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
@@ -206,7 +205,7 @@ class CartView extends GetView<CartController> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             InkWell(
-                              onTap: () => controller.decreaseQuantity(index),
+                              onTap: () => controller.decreaseQuantity(itemId),
                               borderRadius: BorderRadius.circular(8),
                               child: const Padding(
                                 padding: EdgeInsets.all(6),
@@ -218,7 +217,7 @@ class CartView extends GetView<CartController> {
                                 horizontal: 8,
                               ),
                               child: Text(
-                                '$quantity',
+                                '${item.quantity}',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13,
@@ -226,7 +225,7 @@ class CartView extends GetView<CartController> {
                               ),
                             ),
                             InkWell(
-                              onTap: () => controller.increaseQuantity(index),
+                              onTap: () => controller.increaseQuantity(itemId),
                               borderRadius: BorderRadius.circular(8),
                               child: const Padding(
                                 padding: EdgeInsets.all(6),
@@ -240,7 +239,7 @@ class CartView extends GetView<CartController> {
                       IconButton(
                         tooltip: 'Hapus produk',
                         visualDensity: VisualDensity.compact,
-                        onPressed: () => controller.removeItem(index),
+                        onPressed: () => controller.removeItem(itemId),
                         icon: const Icon(
                           Icons.delete_outline_rounded,
                           size: 20,
@@ -256,7 +255,7 @@ class CartView extends GetView<CartController> {
         );
       }),
       bottomNavigationBar: Obx(() {
-        final isEmpty = controller.cartItems.isEmpty;
+        final isEmpty = controller.items.isEmpty;
 
         return Container(
           padding: const EdgeInsets.all(16),
@@ -282,14 +281,24 @@ class CartView extends GetView<CartController> {
                 ),
                 const SizedBox(height: 6),
                 _SummaryRow(
-                  label: 'Diskon Spesial',
-                  value: '- ${controller.formatRupiah(controller.discount)}',
-                  textColor: AppColors.success,
+                  label: 'PPN (11%)',
+                  value: controller.formatRupiah(controller.tax),
+                  textColor: textSecondary,
+                ),
+                const SizedBox(height: 6),
+                _SummaryRow(
+                  label: 'Ongkos Kirim',
+                  value: controller.shippingCost == 0
+                      ? 'Gratis'
+                      : controller.formatRupiah(controller.shippingCost),
+                  textColor: controller.shippingCost == 0
+                      ? AppColors.success
+                      : textSecondary,
                 ),
                 const Divider(height: 18),
                 _SummaryRow(
                   label: 'Total Pembayaran',
-                  value: controller.formatRupiah(controller.totalPayment),
+                  value: controller.formatRupiah(controller.totalAmount),
                   textColor: AppColors.primary,
                   isTotal: true,
                 ),

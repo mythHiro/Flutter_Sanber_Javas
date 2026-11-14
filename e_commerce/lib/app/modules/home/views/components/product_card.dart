@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:e_commerce/app/core/theme/app_colors.dart';
 
@@ -28,8 +27,7 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark =
-        Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -52,19 +50,16 @@ class ProductCard extends StatelessWidget {
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) =>
                           const Center(
-                        child: Icon(
-                          Icons.image_not_supported_outlined,
-                          size: 40,
-                        ),
-                      ),
-                      loadingBuilder:
-                          (context, child, loadingProgress) {
+                            child: Icon(
+                              Icons.image_not_supported_outlined,
+                              size: 40,
+                            ),
+                          ),
+                      loadingBuilder: (context, child, loadingProgress) {
                         if (loadingProgress == null) return child;
 
                         return const Center(
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         );
                       },
                     ),
@@ -174,8 +169,7 @@ class ProductCard extends StatelessWidget {
 
                     // Harga dan tombol keranjang
                     Row(
-                      mainAxisAlignment:
-                          MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
                           child: Text(

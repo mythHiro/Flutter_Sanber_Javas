@@ -1,10 +1,10 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:e_commerce/app/core/theme/app_colors.dart';
 import 'package:e_commerce/app/routes/app_pages.dart';
 import '../controllers/home_controller.dart';
+import '../../cart/controllers/cart_controller.dart';
 import 'components/product_card.dart';
 import 'components/promo_banner.dart';
 
@@ -13,12 +13,18 @@ class HomeView extends GetView<HomeController> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark =
-        Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isCompact = screenWidth < 600;
+
+    final cartController = Get.find<CartController>();
 
     return Scaffold(
       appBar: AppBar(
+        titleSpacing: 16,
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: const EdgeInsets.all(6),
@@ -33,57 +39,115 @@ class HomeView extends GetView<HomeController> {
               ),
             ),
             const SizedBox(width: 10),
-            RichText(
-              text: TextSpan(
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: isDark
-                      ? AppColors.darkTextPrimary
-                      : AppColors.lightTextPrimary,
-                ),
-                children: const [
-                  TextSpan(text: 'JaVs'),
-                  TextSpan(
-                    text: 'Store',
-                    style: TextStyle(color: AppColors.primary),
+            Flexible(
+              child: RichText(
+                overflow: TextOverflow.ellipsis,
+                text: TextSpan(
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.lightTextPrimary,
                   ),
-                ],
+                  children: const [
+                    TextSpan(text: 'JaVs'),
+                    TextSpan(
+                      text: 'Store',
+                      style: TextStyle(color: AppColors.primary),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
         ),
         actions: [
-          IconButton(
-            tooltip: 'Wishlist Favorit',
-            icon: const Icon(Icons.favorite_border_rounded),
-            onPressed: () => Get.toNamed(Routes.WISHLIST),
-          ),
-          IconButton(
-            tooltip: 'Riwayat Pesanan',
-            icon: const Icon(Icons.receipt_long_outlined),
-            onPressed: () => Get.toNamed(Routes.ORDERS),
-          ),
-          IconButton(
-            tooltip: 'Ganti Tema',
-            icon: Icon(
-              isDark
-                  ? Icons.light_mode_rounded
-                  : Icons.dark_mode_rounded,
-              color: isDark
-                  ? AppColors.accent
-                  : AppColors.lightTextPrimary,
+          // Tombol aksi untuk layar lebar
+          if (!isCompact) ...[
+            IconButton(
+              tooltip: 'Wishlist Favorit',
+              icon: const Icon(Icons.favorite_border_rounded),
+              onPressed: () => Get.toNamed(Routes.WISHLIST),
             ),
-            onPressed: () {
-              Get.changeThemeMode(
-                Get.isDarkMode
-                    ? ThemeMode.light
-                    : ThemeMode.dark,
-              );
-            },
-          ),
+            IconButton(
+              tooltip: 'Riwayat Pesanan',
+              icon: const Icon(Icons.receipt_long_outlined),
+              onPressed: () => Get.toNamed(Routes.ORDERS),
+            ),
+            IconButton(
+              tooltip: 'Ganti Tema',
+              icon: Icon(
+                isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                color: isDark ? AppColors.accent : AppColors.lightTextPrimary,
+              ),
+              onPressed: () {
+                Get.changeThemeMode(
+                  Get.isDarkMode ? ThemeMode.light : ThemeMode.dark,
+                );
+              },
+            ),
+          ],
 
-          // Badge keranjang reaktif
+          // Menu popup untuk layar sempit
+          if (isCompact)
+            PopupMenuButton<String>(
+              tooltip: 'Menu lainnya',
+              icon: const Icon(Icons.more_vert_rounded),
+              onSelected: (value) {
+                switch (value) {
+                  case 'wishlist':
+                    Get.toNamed(Routes.WISHLIST);
+                    break;
+                  case 'orders':
+                    Get.toNamed(Routes.ORDERS);
+                    break;
+                  case 'theme':
+                    Get.changeThemeMode(
+                      Get.isDarkMode ? ThemeMode.light : ThemeMode.dark,
+                    );
+                    break;
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'wishlist',
+                  child: Row(
+                    children: [
+                      Icon(Icons.favorite_border_rounded),
+                      SizedBox(width: 12),
+                      Text('Wishlist Favorit'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'orders',
+                  child: Row(
+                    children: [
+                      Icon(Icons.receipt_long_outlined),
+                      SizedBox(width: 12),
+                      Text('Riwayat Pesanan'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'theme',
+                  child: Row(
+                    children: [
+                      Icon(
+                        isDark
+                            ? Icons.light_mode_rounded
+                            : Icons.dark_mode_rounded,
+                      ),
+                      const SizedBox(width: 12),
+                      const Text('Ganti Tema'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+          // Keranjang tetap tersedia di semua ukuran layar
           Stack(
             alignment: Alignment.center,
             children: [
@@ -96,7 +160,7 @@ class HomeView extends GetView<HomeController> {
                 right: 8,
                 top: 8,
                 child: Obx(() {
-                  final count = controller.cartCount.value;
+                  final count = cartController.totalItems;
 
                   if (count == 0) {
                     return const SizedBox.shrink();
@@ -131,10 +195,7 @@ class HomeView extends GetView<HomeController> {
       ),
 
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -164,26 +225,25 @@ class HomeView extends GetView<HomeController> {
             const SizedBox(height: 20),
 
             // Filter kategori reaktif
+            // Filter kategori reaktif
             SizedBox(
               height: 38,
-              child: Obx(
-                () => ListView.separated(
+              child: Obx(() {
+                // Baca state reaktif langsung di dalam Obx.
+                final selectedCategory = controller.selectedCategory.value;
+
+                return ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: controller.categories.length,
                   separatorBuilder: (context, index) =>
                       const SizedBox(width: 8),
                   itemBuilder: (context, index) {
-                    final category =
-                        controller.categories[index];
-
-                    final isSelected =
-                        controller.selectedCategory.value ==
-                            category;
+                    final category = controller.categories[index];
+                    final isSelected = selectedCategory == category;
 
                     return InkWell(
                       borderRadius: BorderRadius.circular(20),
-                      onTap: () =>
-                          controller.selectCategory(category),
+                      onTap: () => controller.selectCategory(category),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -193,15 +253,15 @@ class HomeView extends GetView<HomeController> {
                           color: isSelected
                               ? AppColors.primary
                               : (isDark
-                                  ? AppColors.darkSurfaceCard
-                                  : Colors.white),
+                                    ? AppColors.darkSurfaceCard
+                                    : Colors.white),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: isSelected
                                 ? AppColors.primary
                                 : (isDark
-                                    ? AppColors.darkBorder
-                                    : AppColors.lightBorder),
+                                      ? AppColors.darkBorder
+                                      : AppColors.lightBorder),
                           ),
                         ),
                         child: Center(
@@ -215,23 +275,22 @@ class HomeView extends GetView<HomeController> {
                               color: isSelected
                                   ? Colors.white
                                   : (isDark
-                                      ? AppColors.darkTextSecondary
-                                      : AppColors.lightTextSecondary),
+                                        ? AppColors.darkTextSecondary
+                                        : AppColors.lightTextSecondary),
                             ),
                           ),
                         ),
                       ),
                     );
                   },
-                ),
-              ),
+                );
+              }),
             ),
             const SizedBox(height: 20),
 
             // Judul katalog dan jumlah produk
             Row(
-              mainAxisAlignment:
-                  MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   'Katalog Sneakers',
@@ -265,9 +324,7 @@ class HomeView extends GetView<HomeController> {
               if (products.isEmpty) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 40),
-                  child: Center(
-                    child: Text('Produk tidak ditemukan.'),
-                  ),
+                  child: Center(child: Text('Produk tidak ditemukan.')),
                 );
               }
 
@@ -275,8 +332,7 @@ class HomeView extends GetView<HomeController> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: products.length,
-                gridDelegate:
-                    const SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   childAspectRatio: 0.68,
                   crossAxisSpacing: 12,
@@ -284,29 +340,24 @@ class HomeView extends GetView<HomeController> {
                 ),
                 itemBuilder: (context, index) {
                   final product = products[index];
-                  final title = product['title'] as String;
 
                   return Obx(
                     () => ProductCard(
-                      title: title,
-                      category: product['category'] as String,
-                      price: product['price'] as String,
-                      rating: product['rating'] as double,
-                      imageUrl: product['image'] as String,
-                      isFavorite:
-                          controller.isFavorite(title),
+                      title: product.name,
+                      category: product.category,
+                      price: product.formattedPrice,
+                      rating: product.rating,
+                      imageUrl: product.imageUrl,
+                      isFavorite: controller.isFavorite(product.id),
                       onToggleFavorite: () {
-                        controller.toggleFavorite(title);
+                        controller.toggleFavorite(product.id);
                       },
                       onAddToCart: () {
-                        controller.addToCart(
-                          product: product,
-                          size: 42
-                        );
+                        cartController.addItem(product, size: 42);
 
                         Get.snackbar(
                           'Ditambahkan',
-                          '$title ditambahkan ke keranjang!',
+                          '${product.name} ditambahkan ke keranjang!',
                           snackPosition: SnackPosition.BOTTOM,
                           backgroundColor: AppColors.success,
                           colorText: Colors.white,
@@ -316,10 +367,7 @@ class HomeView extends GetView<HomeController> {
                         );
                       },
                       onTap: () {
-                        Get.toNamed(
-                          Routes.DETAIL,
-                          arguments: product,
-                        );
+                        Get.toNamed(Routes.DETAIL, arguments: product);
                       },
                     ),
                   );
