@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:e_commerce/app/core/theme/app_colors.dart';
+import 'package:e_commerce/app/data/local/storage_service.dart';
 import 'package:e_commerce/app/routes/app_pages.dart';
+
 import '../controllers/home_controller.dart';
 import '../../cart/controllers/cart_controller.dart';
 import 'components/product_card.dart';
 import 'components/promo_banner.dart';
+import '../widgets/product_card_shimmer.dart';
 
 class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
@@ -82,9 +85,7 @@ class HomeView extends GetView<HomeController> {
                 color: isDark ? AppColors.accent : AppColors.lightTextPrimary,
               ),
               onPressed: () {
-                Get.changeThemeMode(
-                  Get.isDarkMode ? ThemeMode.light : ThemeMode.dark,
-                );
+                Get.find<StorageService>().toggleTheme();
               },
             ),
           ],
@@ -103,9 +104,7 @@ class HomeView extends GetView<HomeController> {
                     Get.toNamed(Routes.ORDERS);
                     break;
                   case 'theme':
-                    Get.changeThemeMode(
-                      Get.isDarkMode ? ThemeMode.light : ThemeMode.dark,
-                    );
+                    Get.find<StorageService>().toggleTheme();
                     break;
                 }
               },
@@ -325,12 +324,9 @@ class HomeView extends GetView<HomeController> {
                 final isLoading = controller.isLoading.value;
                 final errorMessage = controller.errorMessage.value;
 
-                // Loading ketika belum ada produk.
+                // Shimmer ketika loading awal.
                 if (isLoading && controller.products.isEmpty) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 48),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
+                  return const ProductGridShimmer(itemCount: 4);
                 }
 
                 // Error ketika tidak ada produk yang bisa ditampilkan.
