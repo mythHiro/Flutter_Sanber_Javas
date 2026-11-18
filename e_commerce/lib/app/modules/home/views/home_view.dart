@@ -63,7 +63,7 @@ class HomeView extends GetView<HomeController> {
           ],
         ),
         actions: [
-          // Tombol aksi untuk layar lebar
+          // Tombol aksi untuk layar lebar.
           if (!isCompact) ...[
             IconButton(
               tooltip: 'Wishlist Favorit',
@@ -89,7 +89,7 @@ class HomeView extends GetView<HomeController> {
             ),
           ],
 
-          // Menu popup untuk layar sempit
+          // Menu popup untuk layar sempit.
           if (isCompact)
             PopupMenuButton<String>(
               tooltip: 'Menu lainnya',
@@ -147,7 +147,7 @@ class HomeView extends GetView<HomeController> {
               ],
             ),
 
-          // Keranjang tetap tersedia di semua ukuran layar
+          // Keranjang tetap tersedia di semua ukuran layar.
           Stack(
             alignment: Alignment.center,
             children: [
@@ -194,188 +194,241 @@ class HomeView extends GetView<HomeController> {
         ],
       ),
 
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Search bar
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'Cari sneakers favoritmu...',
-                prefixIcon: const Icon(Icons.search_rounded),
-                suffixIcon: Container(
-                  margin: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.tune_rounded,
-                    color: Colors.white,
-                    size: 18,
+      // Pull-to-refresh.
+      body: RefreshIndicator(
+        onRefresh: controller.fetchProducts,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Search bar.
+              TextField(
+                decoration: InputDecoration(
+                  hintText: 'Cari sneakers favoritmu...',
+                  prefixIcon: const Icon(Icons.search_rounded),
+                  suffixIcon: Container(
+                    margin: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.tune_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // Banner promosi
-            const PromoBanner(),
-            const SizedBox(height: 20),
+              // Banner promosi.
+              const PromoBanner(),
+              const SizedBox(height: 20),
 
-            // Filter kategori reaktif
-            // Filter kategori reaktif
-            SizedBox(
-              height: 38,
-              child: Obx(() {
-                // Baca state reaktif langsung di dalam Obx.
-                final selectedCategory = controller.selectedCategory.value;
+              // Filter kategori reaktif.
+              SizedBox(
+                height: 38,
+                child: Obx(() {
+                  final selectedCategory = controller.selectedCategory.value;
 
-                return ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: controller.categories.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(width: 8),
-                  itemBuilder: (context, index) {
-                    final category = controller.categories[index];
-                    final isSelected = selectedCategory == category;
+                  return ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: controller.categories.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      final category = controller.categories[index];
+                      final isSelected = selectedCategory == category;
 
-                    return InkWell(
-                      borderRadius: BorderRadius.circular(20),
-                      onTap: () => controller.selectCategory(category),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.primary
-                              : (isDark
-                                    ? AppColors.darkSurfaceCard
-                                    : Colors.white),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
+                      return InkWell(
+                        borderRadius: BorderRadius.circular(20),
+                        onTap: () => controller.selectCategory(category),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
                             color: isSelected
                                 ? AppColors.primary
                                 : (isDark
-                                      ? AppColors.darkBorder
-                                      : AppColors.lightBorder),
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            category,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.w500,
+                                      ? AppColors.darkSurfaceCard
+                                      : Colors.white),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
                               color: isSelected
-                                  ? Colors.white
+                                  ? AppColors.primary
                                   : (isDark
-                                        ? AppColors.darkTextSecondary
-                                        : AppColors.lightTextSecondary),
+                                        ? AppColors.darkBorder
+                                        : AppColors.lightBorder),
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              category,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.w500,
+                                color: isSelected
+                                    ? Colors.white
+                                    : (isDark
+                                          ? AppColors.darkTextSecondary
+                                          : AppColors.lightTextSecondary),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  },
-                );
-              }),
-            ),
-            const SizedBox(height: 20),
+                      );
+                    },
+                  );
+                }),
+              ),
+              const SizedBox(height: 20),
 
-            // Judul katalog dan jumlah produk
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Katalog Sneakers',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: isDark
-                        ? AppColors.darkTextPrimary
-                        : AppColors.lightTextPrimary,
-                  ),
-                ),
-                Obx(
-                  () => Text(
-                    '${controller.productCount} Produk',
+              // Judul katalog dan jumlah produk.
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Katalog Sneakers',
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                       color: isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.lightTextSecondary,
+                          ? AppColors.darkTextPrimary
+                          : AppColors.lightTextPrimary,
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
+                  Obx(
+                    () => Text(
+                      '${controller.productCount} Produk',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.lightTextSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
 
-            // Grid produk reaktif
-            Obx(() {
-              final products = controller.filteredProducts;
+              // Grid produk, loading, dan error state.
+              Obx(() {
+                final products = controller.filteredProducts;
+                final isLoading = controller.isLoading.value;
+                final errorMessage = controller.errorMessage.value;
 
-              if (products.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 40),
-                  child: Center(child: Text('Produk tidak ditemukan.')),
-                );
-              }
+                // Loading ketika belum ada produk.
+                if (isLoading && controller.products.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 48),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
 
-              return GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: products.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.68,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
-                itemBuilder: (context, index) {
-                  final product = products[index];
-
-                  return Obx(
-                    () => ProductCard(
-                      title: product.name,
-                      category: product.category,
-                      price: product.formattedPrice,
-                      rating: product.rating,
-                      imageUrl: product.imageUrl,
-                      isFavorite: controller.isFavorite(product.id),
-                      onToggleFavorite: () {
-                        controller.toggleFavorite(product.id);
-                      },
-                      onAddToCart: () {
-                        cartController.addItem(product, size: 42);
-
-                        Get.snackbar(
-                          'Ditambahkan',
-                          '${product.name} ditambahkan ke keranjang!',
-                          snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: AppColors.success,
-                          colorText: Colors.white,
-                          margin: const EdgeInsets.all(16),
-                          borderRadius: 12,
-                          duration: const Duration(seconds: 2),
-                        );
-                      },
-                      onTap: () {
-                        Get.toNamed(Routes.DETAIL, arguments: product);
-                      },
+                // Error ketika tidak ada produk yang bisa ditampilkan.
+                if (errorMessage.isNotEmpty && controller.products.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 32),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          const Icon(
+                            Icons.cloud_off_rounded,
+                            size: 48,
+                            color: Colors.grey,
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Gagal memuat katalog',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(errorMessage, textAlign: TextAlign.center),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: controller.fetchProducts,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Coba Lagi'),
+                          ),
+                        ],
+                      ),
                     ),
                   );
-                },
-              );
-            }),
-            const SizedBox(height: 24),
-          ],
+                }
+
+                // Katalog kosong.
+                if (products.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(child: Text('Produk tidak ditemukan.')),
+                  );
+                }
+
+                return Column(
+                  children: [
+                    // Indikator ketika refresh berlangsung.
+                    if (isLoading) const LinearProgressIndicator(),
+
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: products.length,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 0.68,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                          ),
+                      itemBuilder: (context, index) {
+                        final product = products[index];
+
+                        return Obx(
+                          () => ProductCard(
+                            title: product.name,
+                            category: product.category,
+                            price: product.formattedPrice,
+                            rating: product.rating,
+                            imageUrl: product.imageUrl,
+                            isFavorite: controller.isFavorite(product.id),
+                            onToggleFavorite: () {
+                              controller.toggleFavorite(product.id);
+                            },
+                            onAddToCart: () {
+                              cartController.addItem(product, size: 42);
+
+                              Get.snackbar(
+                                'Ditambahkan',
+                                '${product.name} ditambahkan ke keranjang!',
+                                snackPosition: SnackPosition.BOTTOM,
+                                backgroundColor: AppColors.success,
+                                colorText: Colors.white,
+                                margin: const EdgeInsets.all(16),
+                                borderRadius: 12,
+                                duration: const Duration(seconds: 2),
+                              );
+                            },
+                            onTap: () {
+                              Get.toNamed(Routes.DETAIL, arguments: product);
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                );
+              }),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );

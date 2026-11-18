@@ -14,6 +14,7 @@ import '../modules/register/views/register_view.dart';
 import '../modules/wishlist/bindings/wishlist_binding.dart';
 import '../modules/wishlist/views/wishlist_view.dart';
 import '../modules/cart/views/cart_view.dart';
+import '../modules/home/bindings/home_binding.dart';
 
 part 'app_routes.dart';
 
@@ -23,7 +24,11 @@ class AppPages {
   static const INITIAL = Routes.LOGIN;
 
   static final routes = [
-    GetPage(name: _Paths.HOME, page: () => const HomeView()),
+    GetPage(
+      name: _Paths.HOME,
+      page: () => const HomeView(),
+      binding: HomeBinding(),
+    ),
     GetPage(
       name: _Paths.DETAIL,
       page: () => const DetailView(),

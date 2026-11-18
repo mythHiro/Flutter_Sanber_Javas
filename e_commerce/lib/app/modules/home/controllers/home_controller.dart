@@ -1,9 +1,17 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../data/models/product_model.dart';
+import '../../../data/repository/product_repository.dart';
+import '../../../core/network/result.dart';
 
 class HomeController extends GetxController {
-  final List<ProductModel> products = [
+  final ProductRepository repository;
+
+  HomeController({required this.repository});
+
+  // Katalog lokal sebagai fallback ketika API gagal.
+  final RxList<ProductModel> products = <ProductModel>[
     const ProductModel(
       id: 'nike-air-jordan-1-retro-high',
       name: 'Nike Air Jordan 1 Retro High',
@@ -58,7 +66,7 @@ class HomeController extends GetxController {
       imageUrl:
           'https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?w=500&q=80',
     ),
-  ];
+  ].obs;
 
   final List<String> categories = [
     'Semua',
@@ -70,10 +78,60 @@ class HomeController extends GetxController {
   ];
 
   final selectedCategory = 'Semua'.obs;
-
-  // Menyimpan ID produk yang masuk wishlist.
   final favoriteIds = <String>{}.obs;
 
+  // State networking.
+  final isLoading = false.obs;
+  final errorMessage = ''.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchProducts();
+  }
+
+  Future<void> fetchProducts() async {
+    isLoading.value = true;
+    errorMessage.value = '';
+
+    try {
+      final result = await repository.fetchProducts();
+
+      if (result is Success<List<ProductModel>, String>) {
+        final remoteProducts = result.data;
+
+        products.assignAll(remoteProducts);
+
+        Get.snackbar(
+          'Katalog Berhasil Diperbarui',
+          'Berhasil mengunduh ${remoteProducts.length} sepatu terbaru dari server!',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFF10B981),
+          colorText: Colors.white,
+          duration: const Duration(seconds: 2),
+          icon: const Icon(Icons.cloud_done, color: Colors.white),
+        );
+      } else if (result is Failure<List<ProductModel>, String>) {
+        errorMessage.value = result.error;
+
+        if (products.isNotEmpty) {
+          Get.snackbar(
+            'Mode Offline',
+            'Koneksi server terputus. Menampilkan katalog offline.',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: const Color(0xFFEF4444),
+            colorText: Colors.white,
+            duration: const Duration(seconds: 2),
+            icon: const Icon(Icons.cloud_off, color: Colors.white),
+          );
+        }
+      }
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Filter kategori.
   List<ProductModel> get filteredProducts {
     if (selectedCategory.value == 'Semua') {
       return products;
@@ -90,6 +148,7 @@ class HomeController extends GetxController {
     selectedCategory.value = category;
   }
 
+  // Wishlist.
   bool isFavorite(String productId) {
     return favoriteIds.contains(productId);
   }
